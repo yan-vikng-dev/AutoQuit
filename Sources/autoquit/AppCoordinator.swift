@@ -57,6 +57,7 @@ final class AppCoordinator {
         statusController.onClearLogFile = { [weak self] in self?.logger.clearLogFile() }
         statusController.onGrantAccessibility = { AccessibilityInspector.promptForAccessibilityTrust() }
         statusController.onShowPermissions = { _ = AccessibilityInspector.openAccessibilitySettings() }
+        statusController.onSupportDev = { [weak self] in self?.openSupportLink() }
         statusController.onHideAutoQuit = { [weak self] in self?.handleHideAutoQuit() }
         statusController.onQuitAutoQuit = { NSApp.terminate(nil) }
     }
@@ -205,5 +206,10 @@ final class AppCoordinator {
         if response == .alertSecondButtonReturn {
             _ = loginItemManager.openLoginItemsSettings()
         }
+    }
+
+    private func openSupportLink() {
+        guard let url = URL(string: "https://ko-fi.com/vikng") else { return }
+        _ = NSWorkspace.shared.open(url)
     }
 }

@@ -10,6 +10,7 @@ final class StatusMenuController {
         case toggleLogging
         case openLogFile
         case clearLogFile
+        case supportDev
         case hide
         case quit
     }
@@ -22,6 +23,7 @@ final class StatusMenuController {
     var onClearLogFile: (() -> Void)?
     var onGrantAccessibility: (() -> Void)?
     var onShowPermissions: (() -> Void)?
+    var onSupportDev: (() -> Void)?
     var onHideAutoQuit: (() -> Void)?
     var onQuitAutoQuit: (() -> Void)?
 
@@ -79,6 +81,13 @@ final class StatusMenuController {
         moreMenu.addItem(clearLogItem)
         moreItem.submenu = moreMenu
         menu.addItem(moreItem)
+
+        menu.addItem(.separator())
+
+        let supportItem = NSMenuItem()
+        configureMenuItem(supportItem, title: "Support the dev", tag: .supportDev)
+        supportItem.image = NSImage(systemSymbolName: "cup.and.saucer.fill", accessibilityDescription: nil)
+        menu.addItem(supportItem)
 
         menu.addItem(.separator())
 
@@ -174,6 +183,8 @@ final class StatusMenuController {
             onOpenLogFile?()
         case .clearLogFile:
             onClearLogFile?()
+        case .supportDev:
+            onSupportDev?()
         case .hide:
             onHideAutoQuit?()
         case .quit:

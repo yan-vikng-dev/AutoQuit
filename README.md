@@ -1,25 +1,28 @@
 # AutoQuit
 
 AutoQuit is a macOS menu bar app that closes apps after their last window is gone.
+This mirrors Windows behaviour where apps cannot remain open without a window.
 
 ## Behavior
 
-- Tracks regular user apps.
-- Uses Accessibility events and AX window inspection.
-- Quits an app only when:
-  - the app is older than the configured grace period,
-  - AX window count is `0`,
-  - and the app has shown at least one window since launch.
+- AutoQuit uses a grace period mechanism to prevent apps with splash screens from being closed prematurely.
+- Grace period is measured from app launch time.
+- AutoQuit does not quit the following apps:
+  - Finder
+  - Dock
+  - SystemUIServer
+  - Control Center
+  - Notification Center
+  - loginwindow
+  - WindowServer
 
-Default grace period is `5s`.
+## Installation
 
-## Controls
+1. Download the latest build: https://github.com/yan-vikng-dev/AutoQuit/releases/latest
+2. Open the `.zip` and move `AutoQuit.app` to `/Applications`.
+3. Open `AutoQuit.app`.
 
-- Enable / disable AutoQuit
-- Enable Launch at Login
-- Set grace period: `0, 1, 3, 5, 10, 30` seconds
-- Enable / disable file logging
-- Open / clear log file
+> Temporary note: until AutoQuit is signed with an Apple Developer account, macOS may show a “malicious software” warning. If that happens, open it from `System Settings -> Privacy & Security` (or right-click `AutoQuit.app` -> `Open`) to allow it.
 
 ## Build and Run
 
@@ -34,10 +37,3 @@ Or use the local install workflow:
 just rebuild-install
 open /Applications/AutoQuit.app
 ```
-
-## Permissions
-
-AutoQuit requires Accessibility permission:
-
-- `System Settings -> Privacy & Security -> Accessibility`
-- enable `AutoQuit`
