@@ -12,6 +12,7 @@
 		2F38557E62F85CDB3579149A /* AccessibilityInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8686940774EC95353F40DB0A /* AccessibilityInspector.swift */; };
 		4BA2BE40F8CB9C137EDB0674 /* AccessibilityEventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED6150F5C67F76C27E69B270 /* AccessibilityEventMonitor.swift */; };
 		5197FCB6AAE49B201042C29E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D491A3F8F4E7C142BD5FD68 /* main.swift */; };
+		5302D6E5A315B99EC82268F7 /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66863C162C2C1082AFCA1694 /* LoginItemManager.swift */; };
 		59348DA387935C4230E0E09B /* AutoQuitAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87EDB4A5ABDE1CDE7314832 /* AutoQuitAppDelegate.swift */; };
 		86D5DA2310A857FC12CB8BB0 /* StatusMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808FF60B490F3C3BDE45BADD /* StatusMenuController.swift */; };
 		E9FB63FDA81A33F94E68EA6A /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B61D9DC11ED0D8BCF95CAB /* AppCoordinator.swift */; };
@@ -23,6 +24,7 @@
 /* Begin PBXFileReference section */
 		075EC34F7F90AD6388103EE5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		52B61D9DC11ED0D8BCF95CAB /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		66863C162C2C1082AFCA1694 /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
 		808FF60B490F3C3BDE45BADD /* StatusMenuController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusMenuController.swift; sourceTree = "<group>"; };
 		8686940774EC95353F40DB0A /* AccessibilityInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityInspector.swift; sourceTree = "<group>"; };
 		8D491A3F8F4E7C142BD5FD68 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -45,6 +47,7 @@
 				EFBA18E69B189CE8CE09C350 /* AppLogger.swift */,
 				D87EDB4A5ABDE1CDE7314832 /* AutoQuitAppDelegate.swift */,
 				B088DAF900216108D63F1604 /* AutoQuitEngine.swift */,
+				66863C162C2C1082AFCA1694 /* LoginItemManager.swift */,
 				8D491A3F8F4E7C142BD5FD68 /* main.swift */,
 				808FF60B490F3C3BDE45BADD /* StatusMenuController.swift */,
 			);
@@ -108,6 +111,12 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					9F20185473B6E27AD448A8F4 = {
+						DevelopmentTeam = 35BT7G59BF;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = 9DDDA4B28E3E53D537D5A4D5 /* Build configuration list for PBXProject "AutoQuit" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -152,6 +161,7 @@
 				FEB6967875BF46CFDC8B3466 /* AppLogger.swift in Sources */,
 				59348DA387935C4230E0E09B /* AutoQuitAppDelegate.swift in Sources */,
 				165BB25985CEB0D66D564D65 /* AutoQuitEngine.swift in Sources */,
+				5302D6E5A315B99EC82268F7 /* LoginItemManager.swift in Sources */,
 				86D5DA2310A857FC12CB8BB0 /* StatusMenuController.swift in Sources */,
 				5197FCB6AAE49B201042C29E /* main.swift in Sources */,
 			);
@@ -164,8 +174,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 35BT7G59BF;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "AutoQuit-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -185,8 +198,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 35BT7G59BF;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "AutoQuit-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (

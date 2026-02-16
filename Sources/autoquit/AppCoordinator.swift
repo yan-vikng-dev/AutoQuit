@@ -2,11 +2,18 @@ import AppKit
 
 @MainActor
 final class AppCoordinator {
+    private enum DefaultsKey {
+        static let gracePeriodSeconds = "gracePeriodSeconds"
+    }
+
     private let engine = AutoQuitEngine()
     private let statusController = StatusMenuController()
     private let logger = AppLogger.shared
+    private let loginItemManager = LoginItemManager()
+    private let defaults = UserDefaults.standard
 
     func start() {
+        applyPersistedSettings()
         engine.debugLoggingEnabled = logger.isEnabled
         engine.isEnabled = engine.isAccessibilityTrusted
         engine.onAccessibilityTrustChanged = { [weak self] trusted in
@@ -43,6 +50,24 @@ final class AppCoordinator {
             self.engine.debugLoggingEnabled = self.logger.isEnabled
             self.renderMenu()
         }
+        statusController.onSetGracePeriod = { [weak self] seconds in
+            guard let self else { return }
+            self.engine.setGracePeriod(seconds: seconds)
+            self.defaults.set(seconds, forKey: DefaultsKey.gracePeriodSeconds)
+            self.renderMenu()
+        }
+        statusController.onToggleLaunchAtLogin = { [weak self] in
+            guard let self else { return }
+            do {
+                try self.loginItemManager.toggle()
+            } catch {
+                self.showLaunchAtLoginErrorAlert(error: error)
+            }
+            if self.loginItemManager.state == .requiresApproval {
+                self.showLaunchAtLoginApprovalAlert()
+            }
+            self.renderMenu()
+        }
         statusController.onOpenLogFile = { [weak self] in
             guard let self else { return }
             self.logger.openLogFile()
@@ -61,6 +86,12 @@ final class AppCoordinator {
         engine.start()
     }
 
+    private func applyPersistedSettings() {
+        guard defaults.object(forKey: DefaultsKey.gracePeriodSeconds) != nil else { return }
+        let persistedGracePeriod = defaults.double(forKey: DefaultsKey.gracePeriodSeconds)
+        engine.setGracePeriod(seconds: persistedGracePeriod)
+    }
+
     private func bootstrapAccessibilityPermission() {
         logger.log(component: "Startup", message: AccessibilityInspector.runtimeIdentitySummary())
         let inspector = AccessibilityInspector()
@@ -73,11 +104,24 @@ final class AppCoordinator {
     }
 
     private func renderMenu() {
+        let launchAtLoginState: StatusMenuController.LaunchAtLoginState
+        switch loginItemManager.state {
+        case .on:
+            launchAtLoginState = .on
+        case .off:
+            launchAtLoginState = .off
+        case .requiresApproval:
+            launchAtLoginState = .requiresApproval
+        case .unavailable:
+            launchAtLoginState = .unavailable
+        }
+
         statusController.render(
             isEnabled: engine.isEnabled,
             gracePeriod: engine.gracePeriodSeconds,
             isLoggingEnabled: logger.isEnabled,
-            isAccessibilityTrusted: engine.isAccessibilityTrusted
+            isAccessibilityTrusted: engine.isAccessibilityTrusted,
+            launchAtLoginState: launchAtLoginState
         )
     }
 
@@ -92,6 +136,33 @@ final class AppCoordinator {
         if response == .alertFirstButtonReturn {
             AccessibilityInspector.promptForAccessibilityTrust()
             _ = AccessibilityInspector.openAccessibilitySettings()
+        }
+    }
+
+    private func showLaunchAtLoginApprovalAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Approve Launch at Login"
+        alert.informativeText = "AutoQuit is registered as a login item but still needs approval in System Settings."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Open Login Items")
+        alert.addButton(withTitle: "Later")
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            _ = loginItemManager.openLoginItemsSettings()
+        }
+    }
+
+    private func showLaunchAtLoginErrorAlert(error: Error) {
+        let nsError = error as NSError
+        let alert = NSAlert()
+        alert.messageText = "Could Not Update Launch at Login"
+        alert.informativeText = nsError.localizedDescription
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Open Login Items")
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            _ = loginItemManager.openLoginItemsSettings()
         }
     }
 }

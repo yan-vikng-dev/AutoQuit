@@ -26,6 +26,9 @@ targets:
       base:
         PRODUCT_NAME: AutoQuit
         PRODUCT_BUNDLE_IDENTIFIER: dev.yan.autoquit
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: 35BT7G59BF
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: AutoQuit-Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

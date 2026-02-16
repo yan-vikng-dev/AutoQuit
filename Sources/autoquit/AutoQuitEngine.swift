@@ -7,7 +7,7 @@ private struct AppRuntimeState {
 
 final class AutoQuitEngine: @unchecked Sendable {
     var isEnabled = true
-    let gracePeriodSeconds: TimeInterval = 8
+    private(set) var gracePeriodSeconds: TimeInterval = 8
     var debugLoggingEnabled = true {
         didSet {
             eventMonitor.debugLoggingEnabled = debugLoggingEnabled
@@ -41,6 +41,24 @@ final class AutoQuitEngine: @unchecked Sendable {
         seedExistingApplications()
         installWorkspaceObservers()
         refreshAccessibilityState()
+    }
+
+    func setGracePeriod(seconds: TimeInterval) {
+        let normalizedSeconds = max(0, seconds)
+        guard gracePeriodSeconds != normalizedSeconds else { return }
+
+        gracePeriodSeconds = normalizedSeconds
+        log("Updated grace period to \(Int(gracePeriodSeconds))s")
+
+        // Existing timers are computed with the previous grace period.
+        for workItem in pendingGraceRechecks.values {
+            workItem.cancel()
+        }
+        pendingGraceRechecks.removeAll()
+
+        for pid in runtimeStateByPID.keys {
+            evaluateApplicationIfTracked(pid: pid)
+        }
     }
 
     var isAccessibilityTrusted: Bool {

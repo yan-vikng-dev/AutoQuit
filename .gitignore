@@ -45,6 +45,7 @@ fastlane/test_output
 # Local generated artifacts
 .derived/
 .derived-release/
+.derived-signing/
 .netrc
 
 # Editor settings (optional)

@@ -2,8 +2,17 @@ import AppKit
 
 @MainActor
 final class StatusMenuController {
+    enum LaunchAtLoginState {
+        case on
+        case off
+        case requiresApproval
+        case unavailable
+    }
+
     var onToggleEnabled: (() -> Void)?
     var onToggleLogging: (() -> Void)?
+    var onSetGracePeriod: ((TimeInterval) -> Void)?
+    var onToggleLaunchAtLogin: (() -> Void)?
     var onOpenLogFile: (() -> Void)?
     var onGrantAccessibility: (() -> Void)?
     var onShowPermissions: (() -> Void)?
@@ -15,9 +24,13 @@ final class StatusMenuController {
     private let loggingItem = NSMenuItem()
     private let openLogItem = NSMenuItem()
     private let graceItem = NSMenuItem()
+    private let graceMenu = NSMenu()
+    private let gracePresets: [Int] = [0, 1, 3, 5, 10, 30]
+    private var graceOptionItems: [NSMenuItem] = []
     private let permissionItem = NSMenuItem()
     private let moreItem = NSMenuItem()
     private let moreMenu = NSMenu()
+    private let launchAtLoginItem = NSMenuItem()
     private let showPermissionsItem = NSMenuItem()
 
     init() {
@@ -28,33 +41,45 @@ final class StatusMenuController {
 
         enabledItem.target = self
         enabledItem.action = #selector(toggleEnabled)
+        enabledItem.title = "AutoQuit Enabled"
         menu.addItem(enabledItem)
-
-        loggingItem.target = self
-        loggingItem.action = #selector(toggleLogging)
-        menu.addItem(loggingItem)
-
-        openLogItem.title = "Open Log File"
-        openLogItem.target = self
-        openLogItem.action = #selector(openLogFile)
-        menu.addItem(openLogItem)
 
         permissionItem.title = "Grant Accessibility Permission"
         permissionItem.target = self
         permissionItem.action = #selector(grantAccessibility)
         menu.addItem(permissionItem)
 
+        graceItem.title = "Grace Period"
+        configureGraceMenu()
+        graceItem.submenu = graceMenu
+        menu.addItem(graceItem)
+
         moreItem.title = "More"
+
+        launchAtLoginItem.title = "Launch at Login"
+        launchAtLoginItem.target = self
+        launchAtLoginItem.action = #selector(toggleLaunchAtLogin)
+        moreMenu.addItem(launchAtLoginItem)
+
+        moreMenu.addItem(.separator())
+
+        loggingItem.title = "File Logging"
+        loggingItem.target = self
+        loggingItem.action = #selector(toggleLogging)
+        moreMenu.addItem(loggingItem)
+
+        openLogItem.title = "Open Log File"
+        openLogItem.target = self
+        openLogItem.action = #selector(openLogFile)
+        moreMenu.addItem(openLogItem)
+        moreMenu.addItem(.separator())
+
         showPermissionsItem.title = "Show Permissions"
         showPermissionsItem.target = self
         showPermissionsItem.action = #selector(showPermissions)
         moreMenu.addItem(showPermissionsItem)
         moreItem.submenu = moreMenu
         menu.addItem(moreItem)
-
-        graceItem.isEnabled = false
-        menu.addItem(graceItem)
-        menu.addItem(.separator())
 
         menu.addItem(.separator())
 
@@ -64,14 +89,61 @@ final class StatusMenuController {
         statusItem.menu = menu
     }
 
-    func render(isEnabled: Bool, gracePeriod: TimeInterval, isLoggingEnabled: Bool, isAccessibilityTrusted: Bool) {
-        enabledItem.title = isEnabled ? "Disable AutoQuit" : "Enable AutoQuit"
-        loggingItem.title = isLoggingEnabled ? "Disable File Logging" : "Enable File Logging"
-        openLogItem.isHidden = !isLoggingEnabled
+    func render(
+        isEnabled: Bool,
+        gracePeriod: TimeInterval,
+        isLoggingEnabled: Bool,
+        isAccessibilityTrusted: Bool,
+        launchAtLoginState: LaunchAtLoginState
+    ) {
+        enabledItem.title = isEnabled ? "AutoQuit Enabled" : "Enable AutoQuit"
+        enabledItem.state = isEnabled ? .on : .off
+        loggingItem.state = isLoggingEnabled ? .on : .off
+        openLogItem.isEnabled = isLoggingEnabled
         permissionItem.isHidden = isAccessibilityTrusted
-        moreItem.isHidden = !isAccessibilityTrusted
-        graceItem.title = "Grace Period: \(Int(gracePeriod))s"
+        showPermissionsItem.isHidden = !isAccessibilityTrusted
+        graceItem.title = "Grace Period (\(Int(gracePeriod))s)"
+        applyGraceSelection(gracePeriod: gracePeriod)
+        applyLaunchAtLoginState(launchAtLoginState)
         applyMenuIcon(isEnabled: isEnabled)
+    }
+
+    private func configureGraceMenu() {
+        graceOptionItems = gracePresets.map { seconds in
+            let item = NSMenuItem(title: "\(seconds)s", action: #selector(selectGracePeriod(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = seconds
+            graceMenu.addItem(item)
+            return item
+        }
+    }
+
+    private func applyGraceSelection(gracePeriod: TimeInterval) {
+        let roundedGrace = Int(gracePeriod.rounded())
+        for item in graceOptionItems {
+            item.state = (item.tag == roundedGrace) ? .on : .off
+        }
+    }
+
+    private func applyLaunchAtLoginState(_ state: LaunchAtLoginState) {
+        switch state {
+        case .on:
+            launchAtLoginItem.title = "Launch at Login"
+            launchAtLoginItem.state = .on
+            launchAtLoginItem.isEnabled = true
+        case .off:
+            launchAtLoginItem.title = "Launch at Login"
+            launchAtLoginItem.state = .off
+            launchAtLoginItem.isEnabled = true
+        case .requiresApproval:
+            launchAtLoginItem.title = "Launch at Login (Approval Needed)"
+            launchAtLoginItem.state = .mixed
+            launchAtLoginItem.isEnabled = true
+        case .unavailable:
+            launchAtLoginItem.title = "Launch at Login (Unavailable)"
+            launchAtLoginItem.state = .off
+            launchAtLoginItem.isEnabled = false
+        }
     }
 
     @objc private func toggleEnabled() {
@@ -88,6 +160,14 @@ final class StatusMenuController {
 
     @objc private func toggleLogging() {
         onToggleLogging?()
+    }
+
+    @objc private func selectGracePeriod(_ sender: NSMenuItem) {
+        onSetGracePeriod?(TimeInterval(sender.tag))
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        onToggleLaunchAtLogin?()
     }
 
     @objc private func openLogFile() {
