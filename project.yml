@@ -1,0 +1,34 @@
+name: AutoQuit
+options:
+  minimumXcodeGenVersion: 2.44.0
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+targets:
+  AutoQuit:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: Sources/autoquit
+      - path: Assets.xcassets
+        buildPhase: resources
+      - path: Assets
+        buildPhase: resources
+        excludes:
+          - temp/**
+          - AppIcon.iconset/**
+          - AppIcon-1024.png
+          - MenuIcon.png
+          - AppIcon.icns
+    settings:
+      base:
+        PRODUCT_NAME: AutoQuit
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yan.autoquit
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: AutoQuit-Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        NSHumanReadableCopyright: "Placeholder"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
