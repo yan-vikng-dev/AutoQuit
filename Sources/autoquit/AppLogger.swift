@@ -65,6 +65,19 @@ final class AppLogger: @unchecked Sendable {
         NSWorkspace.shared.open(url)
     }
 
+    func clearLogFile() {
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.ensureLogDirectory()
+            let url = self.logFileURL()
+            do {
+                try Data().write(to: url, options: .atomic)
+            } catch {
+                // Intentionally ignored; logging should never interrupt app flow.
+            }
+        }
+    }
+
     private func timestamp() -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

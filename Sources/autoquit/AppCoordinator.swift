@@ -72,6 +72,10 @@ final class AppCoordinator {
             guard let self else { return }
             self.logger.openLogFile()
         }
+        statusController.onClearLogFile = { [weak self] in
+            guard let self else { return }
+            self.logger.clearLogFile()
+        }
         statusController.onGrantAccessibility = {
             AccessibilityInspector.promptForAccessibilityTrust()
         }

@@ -2,12 +2,12 @@ import AppKit
 
 private struct AppRuntimeState {
     var launchDate: Date
-    var hasSeenPrimaryWindow: Bool
+    var hasSeenWindow: Bool
 }
 
 final class AutoQuitEngine: @unchecked Sendable {
     var isEnabled = true
-    private(set) var gracePeriodSeconds: TimeInterval = 8
+    private(set) var gracePeriodSeconds: TimeInterval = 5
     var debugLoggingEnabled = true {
         didSet {
             eventMonitor.debugLoggingEnabled = debugLoggingEnabled
@@ -69,7 +69,7 @@ final class AutoQuitEngine: @unchecked Sendable {
         for app in NSWorkspace.shared.runningApplications where shouldTrack(app) {
             runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
                 launchDate: app.launchDate ?? Date(),
-                hasSeenPrimaryWindow: false
+                hasSeenWindow: false
             )
             log("Seed app \(appLabel(app))")
             if accessibilityActive {
@@ -94,7 +94,7 @@ final class AutoQuitEngine: @unchecked Sendable {
             }
             self?.runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
                 launchDate: app.launchDate ?? Date(),
-                hasSeenPrimaryWindow: false
+                hasSeenWindow: false
             )
             self?.log("App launched \(self?.appLabel(app) ?? "unknown")")
             self?.refreshAccessibilityState()
@@ -152,7 +152,7 @@ final class AutoQuitEngine: @unchecked Sendable {
             if runtimeStateByPID[app.processIdentifier] == nil {
                 runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
                     launchDate: app.launchDate ?? Date(),
-                    hasSeenPrimaryWindow: false
+                    hasSeenWindow: false
                 )
             }
             eventMonitor.registerApplication(pid: app.processIdentifier)
@@ -204,16 +204,16 @@ final class AutoQuitEngine: @unchecked Sendable {
         let pid = app.processIdentifier
         var state = runtimeStateByPID[pid] ?? AppRuntimeState(
             launchDate: app.launchDate ?? Date(),
-            hasSeenPrimaryWindow: false
+            hasSeenWindow: false
         )
 
-        let primaryWindowCount = accessibilityInspector.primaryWindowCount(for: pid)
-        log("App \(appLabel(app)) primaryWindowCount=\(primaryWindowCount) hasSeenPrimary=\(state.hasSeenPrimaryWindow)")
-        if primaryWindowCount > 0 {
-            state.hasSeenPrimaryWindow = true
+        let windowCount = accessibilityInspector.windowCount(for: pid)
+        log("App \(appLabel(app)) windowCount=\(windowCount) hasSeenWindow=\(state.hasSeenWindow)")
+        if windowCount > 0 {
+            state.hasSeenWindow = true
             runtimeStateByPID[pid] = state
             cancelGraceRecheck(pid: pid)
-            log("Keep alive \(appLabel(app)): primary window present")
+            log("Keep alive \(appLabel(app)): window present")
             return
         }
 
@@ -225,11 +225,11 @@ final class AutoQuitEngine: @unchecked Sendable {
             return
         }
 
-        // Avoid quitting regular apps that have never surfaced a primary window.
-        if !state.hasSeenPrimaryWindow {
+        // Avoid quitting regular apps that have never surfaced any window.
+        if !state.hasSeenWindow {
             runtimeStateByPID[pid] = state
             cancelGraceRecheck(pid: pid)
-            log("Skip terminate \(appLabel(app)): never saw a primary window")
+            log("Skip terminate \(appLabel(app)): never saw any window")
             return
         }
 
@@ -240,8 +240,8 @@ final class AutoQuitEngine: @unchecked Sendable {
     }
 
     private func scheduleGraceRecheck(for app: NSRunningApplication, state: AppRuntimeState) {
-        guard state.hasSeenPrimaryWindow else {
-            log("No grace recheck for \(appLabel(app)): no primary window observed yet")
+        guard state.hasSeenWindow else {
+            log("No grace recheck for \(appLabel(app)): no window observed yet")
             return
         }
 
