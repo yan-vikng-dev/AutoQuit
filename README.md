@@ -1,69 +1,43 @@
-# AutoQuit (Scaffold)
+# AutoQuit
 
-Menu bar MVP for "quit on last primary window close" using a launch-age grace period instead of a hardcoded delayed quit.
+AutoQuit is a macOS menu bar app that closes apps after their last window is gone.
 
-## Current Behavior
+## Behavior
 
-- Runs as a menu bar app.
-- Tracks regular macOS apps.
-- Uses Accessibility observers (window create/destroy/focus/minimize hooks), not polling.
-- Uses Accessibility window inspection to count primary windows when hooks fire.
-- Records app launch time and applies an age check (`gracePeriodSeconds = 8`).
+- Tracks regular user apps.
+- Uses Accessibility events and AX window inspection.
 - Quits an app only when:
-  - app is older than grace period, and
-  - app has no primary windows, and
-  - app previously had at least one primary window.
+  - the app is older than the configured grace period,
+  - AX window count is `0`,
+  - and the app has shown at least one window since launch.
 
-## Why This Exists
+Default grace period is `5s`.
 
-This scaffold is intentionally simple and hackable. It is designed to test the launch-date grace-period strategy quickly before investing in richer per-app heuristics.
+## Controls
 
-## Run
+- Enable / disable AutoQuit
+- Enable Launch at Login
+- Set grace period: `0, 1, 3, 5, 10, 30` seconds
+- Enable / disable file logging
+- Open / clear log file
 
-```bash
-swift run
-```
-
-Then grant Accessibility access when prompted from the menu item:
-
-- `Request Accessibility Permission`
-
-## Run As Full App (Xcode)
-
-Generate/open the app project:
+## Build and Run
 
 ```bash
 xcodegen generate
 open AutoQuit.xcodeproj
 ```
 
-In Xcode:
-
-- Select scheme `AutoQuit`
-- Press Run
-- Set breakpoints in:
-  - `Sources/autoquit/AutoQuitEngine.swift`
-  - `Sources/autoquit/AccessibilityEventMonitor.swift`
-
-CLI build (no signing required for local build validation):
+Or use the local install workflow:
 
 ```bash
-xcodebuild -project AutoQuit.xcodeproj -scheme AutoQuit -configuration Debug -derivedDataPath .derived build CODE_SIGNING_ALLOWED=NO
-open .derived/Build/Products/Debug/AutoQuit.app
+just rebuild-install
+open /Applications/AutoQuit.app
 ```
 
-## Project Layout
+## Permissions
 
-- `Sources/autoquit/main.swift` app bootstrap
-- `Sources/autoquit/AutoQuitAppDelegate.swift` lifecycle entry point
-- `Sources/autoquit/AppCoordinator.swift` wiring for engine + status menu
-- `Sources/autoquit/StatusMenuController.swift` menu bar UI
-- `Sources/autoquit/AutoQuitEngine.swift` grace-period decisions
-- `Sources/autoquit/AccessibilityInspector.swift` AX window classification
-- `Assets/` placeholder media/icons
+AutoQuit requires Accessibility permission:
 
-## Notes
-
-- This is an MVP scaffold, not production-safe.
-- Some apps use unusual AX behavior; false positives/negatives are still possible.
-- Exclusions and settings UI are intentionally minimal for now.
+- `System Settings -> Privacy & Security -> Accessibility`
+- enable `AutoQuit`
