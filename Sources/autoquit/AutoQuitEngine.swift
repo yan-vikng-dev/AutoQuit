@@ -52,6 +52,9 @@ final class AutoQuitEngine: @unchecked Sendable {
 
     func start() {
         eventMonitor.debugLoggingEnabled = debugLoggingEnabled
+        eventMonitor.onPermissionFailure = { [weak self] in
+            self?.refreshAccessibilityState()
+        }
         log("Starting engine (grace=\(Int(gracePeriodSeconds))s)")
         eventMonitor.start { [weak self] pid in
             self?.evaluateApplicationIfTracked(pid: pid)
