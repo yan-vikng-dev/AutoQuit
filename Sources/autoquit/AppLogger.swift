@@ -34,7 +34,7 @@ final class AppLogger: @unchecked Sendable {
 
     func log(component: String, message: String) {
         guard stateQueue.sync(execute: { _isEnabled }) else { return }
-        let line = "\(timestamp()) [AutoQuit][\(component)] \(message)\n"
+        let line = "\(timestamp()) [\(component)] \(message)\n"
         queue.async { [weak self] in
             guard let self else { return }
             self.ensureLogDirectory()

@@ -2,7 +2,7 @@ import ApplicationServices
 import Foundation
 
 final class AccessibilityEventMonitor {
-    typealias EventHandler = (pid_t) -> Void
+    typealias EventHandler = (pid_t, String) -> Void
 
     private let inspector: AccessibilityInspector
     private var handler: EventHandler?
@@ -78,7 +78,7 @@ final class AccessibilityEventMonitor {
             subscribeToWindowLifecycle(pid: pid, observer: observer)
         }
         log("AX event \(notification) pid=\(pid)")
-        handler?(pid)
+        handler?(pid, notification)
     }
 
     private static let callback: AXObserverCallback = { observer, element, notification, refcon in

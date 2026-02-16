@@ -56,8 +56,8 @@ final class AutoQuitEngine: @unchecked Sendable {
             self?.refreshAccessibilityState()
         }
         log("Starting engine (grace=\(Int(gracePeriodSeconds))s)")
-        eventMonitor.start { [weak self] pid in
-            self?.evaluateApplicationIfTracked(pid: pid)
+        eventMonitor.start { [weak self] pid, notification in
+            self?.evaluateApplicationIfTracked(pid: pid, triggeringNotification: notification)
         }
         seedExistingApplications()
         installWorkspaceObservers()
@@ -192,13 +192,31 @@ final class AutoQuitEngine: @unchecked Sendable {
         trustPollingTimer = nil
     }
 
-    private func evaluateApplicationIfTracked(pid: pid_t) {
+    private func evaluateApplicationIfTracked(pid: pid_t, triggeringNotification: String? = nil) {
         guard let app = NSRunningApplication(processIdentifier: pid), shouldTrack(app) else {
             log("Skipping untracked pid=\(pid)")
             return
         }
+
+        if shouldSkipEvaluationForNonReducingEvent(pid: pid, triggeringNotification: triggeringNotification) {
+            return
+        }
+
         log("Evaluating from AX event for \(appLabel(app))")
         evaluate(app)
+    }
+
+    private func shouldSkipEvaluationForNonReducingEvent(pid: pid_t, triggeringNotification: String?) -> Bool {
+        guard let triggeringNotification else { return false }
+        let nonReducingNotifications: Set<String> = [
+            kAXWindowCreatedNotification as String,
+            kAXWindowDeminiaturizedNotification as String,
+            kAXFocusedWindowChangedNotification as String,
+            kAXMainWindowChangedNotification as String
+        ]
+        guard nonReducingNotifications.contains(triggeringNotification) else { return false }
+        guard let state = runtimeStateByPID[pid], state.hasSeenWindow else { return false }
+        return pendingGraceRechecks[pid] == nil
     }
 
     private func evaluate(_ app: NSRunningApplication) {
@@ -268,7 +286,7 @@ final class AutoQuitEngine: @unchecked Sendable {
         let workItem = DispatchWorkItem { [weak self] in
             self?.pendingGraceRechecks.removeValue(forKey: pid)
             self?.log("Grace timer fired for pid=\(pid)")
-            self?.evaluateApplicationIfTracked(pid: pid)
+            self?.evaluateApplicationIfTracked(pid: pid, triggeringNotification: nil)
         }
         pendingGraceRechecks[pid] = workItem
         log("Scheduled grace recheck for \(appLabel(app)) in \(String(format: "%.2f", secondsUntilGraceEnds))s")
