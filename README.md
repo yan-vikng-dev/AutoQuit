@@ -1,0 +1,2 @@
+# autoquit
+MacOS app autoquit
