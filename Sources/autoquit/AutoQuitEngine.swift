@@ -32,6 +32,24 @@ final class AutoQuitEngine: @unchecked Sendable {
         "com.apple.WindowServer"
     ]
 
+    private func initialRuntimeState(for app: NSRunningApplication) -> AppRuntimeState {
+        AppRuntimeState(
+            launchDate: app.launchDate ?? Date(),
+            hasSeenWindow: false
+        )
+    }
+
+    @discardableResult
+    private func ensureRuntimeState(for app: NSRunningApplication) -> AppRuntimeState {
+        let pid = app.processIdentifier
+        if let existing = runtimeStateByPID[pid] {
+            return existing
+        }
+        let created = initialRuntimeState(for: app)
+        runtimeStateByPID[pid] = created
+        return created
+    }
+
     func start() {
         eventMonitor.debugLoggingEnabled = debugLoggingEnabled
         log("Starting engine (grace=\(Int(gracePeriodSeconds))s)")
@@ -67,10 +85,7 @@ final class AutoQuitEngine: @unchecked Sendable {
 
     private func seedExistingApplications() {
         for app in NSWorkspace.shared.runningApplications where shouldTrack(app) {
-            runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
-                launchDate: app.launchDate ?? Date(),
-                hasSeenWindow: false
-            )
+            ensureRuntimeState(for: app)
             log("Seed app \(appLabel(app))")
             if accessibilityActive {
                 eventMonitor.registerApplication(pid: app.processIdentifier)
@@ -92,10 +107,7 @@ final class AutoQuitEngine: @unchecked Sendable {
             else {
                 return
             }
-            self?.runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
-                launchDate: app.launchDate ?? Date(),
-                hasSeenWindow: false
-            )
+            self?.ensureRuntimeState(for: app)
             self?.log("App launched \(self?.appLabel(app) ?? "unknown")")
             self?.refreshAccessibilityState()
             if self?.accessibilityActive == true {
@@ -149,12 +161,7 @@ final class AutoQuitEngine: @unchecked Sendable {
     private func activateAccessibilityObserversForTrackedApps() {
         let trackedApps = NSWorkspace.shared.runningApplications.filter { shouldTrack($0) }
         for app in trackedApps {
-            if runtimeStateByPID[app.processIdentifier] == nil {
-                runtimeStateByPID[app.processIdentifier] = AppRuntimeState(
-                    launchDate: app.launchDate ?? Date(),
-                    hasSeenWindow: false
-                )
-            }
+            ensureRuntimeState(for: app)
             eventMonitor.registerApplication(pid: app.processIdentifier)
             evaluate(app)
         }
@@ -202,10 +209,7 @@ final class AutoQuitEngine: @unchecked Sendable {
         }
 
         let pid = app.processIdentifier
-        var state = runtimeStateByPID[pid] ?? AppRuntimeState(
-            launchDate: app.launchDate ?? Date(),
-            hasSeenWindow: false
-        )
+        var state = ensureRuntimeState(for: app)
 
         let windowCount = accessibilityInspector.windowCount(for: pid)
         log("App \(appLabel(app)) windowCount=\(windowCount) hasSeenWindow=\(state.hasSeenWindow)")

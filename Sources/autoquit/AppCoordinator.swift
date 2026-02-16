@@ -14,80 +14,81 @@ final class AppCoordinator {
 
     func start() {
         applyPersistedSettings()
+        configureEngine()
+        bootstrapAccessibilityPermission()
+        bindStatusActions()
+
+        renderMenu()
+        engine.start()
+    }
+
+    private func configureEngine() {
         engine.debugLoggingEnabled = logger.isEnabled
         engine.isEnabled = engine.isAccessibilityTrusted
         engine.onAccessibilityTrustChanged = { [weak self] trusted in
             guard let self else { return }
+            let message: String
             if trusted {
                 self.engine.isEnabled = true
-                self.logger.log(component: "Startup", message: "Accessibility granted; AutoQuit enabled")
+                message = "Accessibility granted; AutoQuit enabled"
             } else {
                 self.engine.isEnabled = false
-                self.logger.log(component: "Startup", message: "Accessibility revoked; AutoQuit disabled")
+                message = "Accessibility revoked; AutoQuit disabled"
             }
+            self.logger.log(component: "Startup", message: message)
             self.renderMenu()
         }
-        bootstrapAccessibilityPermission()
+    }
 
-        statusController.onToggleEnabled = { [weak self] in
-            guard let self else { return }
-            if self.engine.isEnabled {
-                self.engine.isEnabled = false
-                self.renderMenu()
-                return
-            }
-            guard self.engine.isAccessibilityTrusted else {
-                self.showAccessibilityRequiredAlert()
-                self.renderMenu()
-                return
-            }
-            self.engine.isEnabled = true
-            self.renderMenu()
-        }
-        statusController.onToggleLogging = { [weak self] in
-            guard let self else { return }
-            self.logger.setEnabled(!self.logger.isEnabled)
-            self.engine.debugLoggingEnabled = self.logger.isEnabled
-            self.renderMenu()
-        }
-        statusController.onSetGracePeriod = { [weak self] seconds in
-            guard let self else { return }
-            self.engine.setGracePeriod(seconds: seconds)
-            self.defaults.set(seconds, forKey: DefaultsKey.gracePeriodSeconds)
-            self.renderMenu()
-        }
-        statusController.onToggleLaunchAtLogin = { [weak self] in
-            guard let self else { return }
-            do {
-                try self.loginItemManager.toggle()
-            } catch {
-                self.showLaunchAtLoginErrorAlert(error: error)
-            }
-            if self.loginItemManager.state == .requiresApproval {
-                self.showLaunchAtLoginApprovalAlert()
-            }
-            self.renderMenu()
-        }
-        statusController.onOpenLogFile = { [weak self] in
-            guard let self else { return }
-            self.logger.openLogFile()
-        }
-        statusController.onClearLogFile = { [weak self] in
-            guard let self else { return }
-            self.logger.clearLogFile()
-        }
-        statusController.onGrantAccessibility = {
-            AccessibilityInspector.promptForAccessibilityTrust()
-        }
-        statusController.onShowPermissions = {
-            _ = AccessibilityInspector.openAccessibilitySettings()
-        }
-        statusController.onQuitAutoQuit = {
-            NSApp.terminate(nil)
-        }
+    private func bindStatusActions() {
+        statusController.onToggleEnabled = { [weak self] in self?.handleToggleEnabled() }
+        statusController.onToggleLogging = { [weak self] in self?.handleToggleLogging() }
+        statusController.onSetGracePeriod = { [weak self] seconds in self?.handleSetGracePeriod(seconds) }
+        statusController.onToggleLaunchAtLogin = { [weak self] in self?.handleToggleLaunchAtLogin() }
+        statusController.onOpenLogFile = { [weak self] in self?.logger.openLogFile() }
+        statusController.onClearLogFile = { [weak self] in self?.logger.clearLogFile() }
+        statusController.onGrantAccessibility = { AccessibilityInspector.promptForAccessibilityTrust() }
+        statusController.onShowPermissions = { _ = AccessibilityInspector.openAccessibilitySettings() }
+        statusController.onQuitAutoQuit = { NSApp.terminate(nil) }
+    }
 
+    private func handleToggleEnabled() {
+        if engine.isEnabled {
+            engine.isEnabled = false
+            renderMenu()
+            return
+        }
+        guard engine.isAccessibilityTrusted else {
+            showAccessibilityRequiredAlert()
+            renderMenu()
+            return
+        }
+        engine.isEnabled = true
         renderMenu()
-        engine.start()
+    }
+
+    private func handleToggleLogging() {
+        logger.setEnabled(!logger.isEnabled)
+        engine.debugLoggingEnabled = logger.isEnabled
+        renderMenu()
+    }
+
+    private func handleSetGracePeriod(_ seconds: TimeInterval) {
+        engine.setGracePeriod(seconds: seconds)
+        defaults.set(seconds, forKey: DefaultsKey.gracePeriodSeconds)
+        renderMenu()
+    }
+
+    private func handleToggleLaunchAtLogin() {
+        do {
+            try loginItemManager.toggle()
+        } catch {
+            showLaunchAtLoginErrorAlert(error: error)
+        }
+        if loginItemManager.state == .requiresApproval {
+            showLaunchAtLoginApprovalAlert()
+        }
+        renderMenu()
     }
 
     private func applyPersistedSettings() {
@@ -108,25 +109,26 @@ final class AppCoordinator {
     }
 
     private func renderMenu() {
-        let launchAtLoginState: StatusMenuController.LaunchAtLoginState
-        switch loginItemManager.state {
-        case .on:
-            launchAtLoginState = .on
-        case .off:
-            launchAtLoginState = .off
-        case .requiresApproval:
-            launchAtLoginState = .requiresApproval
-        case .unavailable:
-            launchAtLoginState = .unavailable
-        }
-
         statusController.render(
             isEnabled: engine.isEnabled,
             gracePeriod: engine.gracePeriodSeconds,
             isLoggingEnabled: logger.isEnabled,
             isAccessibilityTrusted: engine.isAccessibilityTrusted,
-            launchAtLoginState: launchAtLoginState
+            launchAtLoginState: launchAtLoginMenuState
         )
+    }
+
+    private var launchAtLoginMenuState: StatusMenuController.LaunchAtLoginState {
+        switch loginItemManager.state {
+        case .on:
+            return .on
+        case .off:
+            return .off
+        case .requiresApproval:
+            return .requiresApproval
+        case .unavailable:
+            return .unavailable
+        }
     }
 
     private func showAccessibilityRequiredAlert() {

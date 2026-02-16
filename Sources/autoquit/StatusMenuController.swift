@@ -9,6 +9,17 @@ final class StatusMenuController {
         case unavailable
     }
 
+    private enum MenuItemTag: Int {
+        case toggleEnabled
+        case toggleLaunchAtLogin
+        case grantAccessibility
+        case showPermissions
+        case toggleLogging
+        case openLogFile
+        case clearLogFile
+        case quit
+    }
+
     var onToggleEnabled: (() -> Void)?
     var onToggleLogging: (() -> Void)?
     var onSetGracePeriod: ((TimeInterval) -> Void)?
@@ -44,19 +55,13 @@ final class StatusMenuController {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
-        enabledItem.target = self
-        enabledItem.action = #selector(toggleEnabled)
-        enabledItem.title = "AutoQuit Enabled"
+        configureMenuItem(enabledItem, title: "AutoQuit Enabled", tag: .toggleEnabled)
         menu.addItem(enabledItem)
 
-        launchAtLoginItem.title = "Launch at Login Enabled"
-        launchAtLoginItem.target = self
-        launchAtLoginItem.action = #selector(toggleLaunchAtLogin)
+        configureMenuItem(launchAtLoginItem, title: "Launch at Login Enabled", tag: .toggleLaunchAtLogin)
         menu.addItem(launchAtLoginItem)
 
-        permissionItem.title = "Grant Accessibility Permission"
-        permissionItem.target = self
-        permissionItem.action = #selector(grantAccessibility)
+        configureMenuItem(permissionItem, title: "Grant Accessibility Permission", tag: .grantAccessibility)
         menu.addItem(permissionItem)
 
         graceItem.title = "Grace Period"
@@ -65,33 +70,25 @@ final class StatusMenuController {
         menu.addItem(graceItem)
 
         moreItem.title = "More"
-        showPermissionsItem.title = "Show Permissions"
-        showPermissionsItem.target = self
-        showPermissionsItem.action = #selector(showPermissions)
+        configureMenuItem(showPermissionsItem, title: "Show Permissions", tag: .showPermissions)
         moreMenu.addItem(showPermissionsItem)
         moreMenu.addItem(.separator())
 
-        loggingItem.title = "File Logging"
-        loggingItem.target = self
-        loggingItem.action = #selector(toggleLogging)
+        configureMenuItem(loggingItem, title: "File Logging", tag: .toggleLogging)
         moreMenu.addItem(loggingItem)
 
-        openLogItem.title = "Open Log File"
-        openLogItem.target = self
-        openLogItem.action = #selector(openLogFile)
+        configureMenuItem(openLogItem, title: "Open Log File", tag: .openLogFile)
         moreMenu.addItem(openLogItem)
 
-        clearLogItem.title = "Clear Log File"
-        clearLogItem.target = self
-        clearLogItem.action = #selector(clearLogFile)
+        configureMenuItem(clearLogItem, title: "Clear Log File", tag: .clearLogFile)
         moreMenu.addItem(clearLogItem)
         moreItem.submenu = moreMenu
         menu.addItem(moreItem)
 
         menu.addItem(.separator())
 
-        let quitItem = NSMenuItem(title: "Quit AutoQuit", action: #selector(quitAutoQuit), keyEquivalent: "q")
-        quitItem.target = self
+        let quitItem = NSMenuItem()
+        configureMenuItem(quitItem, title: "Quit AutoQuit", tag: .quit, keyEquivalent: "q")
         menu.addItem(quitItem)
     }
 
@@ -133,28 +130,50 @@ final class StatusMenuController {
     }
 
     private func applyLaunchAtLoginState(_ state: LaunchAtLoginState) {
+        let presentation: (title: String, state: NSControl.StateValue, enabled: Bool)
         switch state {
         case .on:
-            launchAtLoginItem.title = "Launch at Login Enabled"
-            launchAtLoginItem.state = .on
-            launchAtLoginItem.isEnabled = true
+            presentation = ("Launch at Login Enabled", .on, true)
         case .off:
-            launchAtLoginItem.title = "Enable Launch at Login"
-            launchAtLoginItem.state = .off
-            launchAtLoginItem.isEnabled = true
+            presentation = ("Enable Launch at Login", .off, true)
         case .requiresApproval:
-            launchAtLoginItem.title = "Launch at Login Enabled (Approval Needed)"
-            launchAtLoginItem.state = .mixed
-            launchAtLoginItem.isEnabled = true
+            presentation = ("Launch at Login Enabled (Approval Needed)", .mixed, true)
         case .unavailable:
-            launchAtLoginItem.title = "Launch at Login (Unavailable)"
-            launchAtLoginItem.state = .off
-            launchAtLoginItem.isEnabled = false
+            presentation = ("Launch at Login (Unavailable)", .off, false)
         }
+        launchAtLoginItem.title = presentation.title
+        launchAtLoginItem.state = presentation.state
+        launchAtLoginItem.isEnabled = presentation.enabled
     }
 
-    @objc private func toggleEnabled() {
-        onToggleEnabled?()
+    private func configureMenuItem(_ item: NSMenuItem, title: String, tag: MenuItemTag, keyEquivalent: String = "") {
+        item.title = title
+        item.tag = tag.rawValue
+        item.target = self
+        item.action = #selector(handleMenuItem(_:))
+        item.keyEquivalent = keyEquivalent
+    }
+
+    @objc private func handleMenuItem(_ sender: NSMenuItem) {
+        guard let tag = MenuItemTag(rawValue: sender.tag) else { return }
+        switch tag {
+        case .toggleEnabled:
+            onToggleEnabled?()
+        case .toggleLaunchAtLogin:
+            onToggleLaunchAtLogin?()
+        case .grantAccessibility:
+            onGrantAccessibility?()
+        case .showPermissions:
+            onShowPermissions?()
+        case .toggleLogging:
+            onToggleLogging?()
+        case .openLogFile:
+            onOpenLogFile?()
+        case .clearLogFile:
+            onClearLogFile?()
+        case .quit:
+            onQuitAutoQuit?()
+        }
     }
 
     @objc private func handleStatusItemClick(_ sender: NSStatusBarButton) {
@@ -177,36 +196,8 @@ final class StatusMenuController {
         menu.popUp(positioning: nil, at: menuPoint, in: sender)
     }
 
-    @objc private func grantAccessibility() {
-        onGrantAccessibility?()
-    }
-
-    @objc private func showPermissions() {
-        onShowPermissions?()
-    }
-
-    @objc private func toggleLogging() {
-        onToggleLogging?()
-    }
-
     @objc private func selectGracePeriod(_ sender: NSMenuItem) {
         onSetGracePeriod?(TimeInterval(sender.tag))
-    }
-
-    @objc private func toggleLaunchAtLogin() {
-        onToggleLaunchAtLogin?()
-    }
-
-    @objc private func openLogFile() {
-        onOpenLogFile?()
-    }
-
-    @objc private func clearLogFile() {
-        onClearLogFile?()
-    }
-
-    @objc private func quitAutoQuit() {
-        onQuitAutoQuit?()
     }
 
     private func applyMenuIcon(isEnabled: Bool) {
