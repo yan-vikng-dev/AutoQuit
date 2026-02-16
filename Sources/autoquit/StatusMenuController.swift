@@ -2,13 +2,6 @@ import AppKit
 
 @MainActor
 final class StatusMenuController {
-    enum LaunchAtLoginState {
-        case on
-        case off
-        case requiresApproval
-        case unavailable
-    }
-
     private enum MenuItemTag: Int {
         case toggleEnabled
         case toggleLaunchAtLogin
@@ -17,6 +10,7 @@ final class StatusMenuController {
         case toggleLogging
         case openLogFile
         case clearLogFile
+        case hide
         case quit
     }
 
@@ -28,6 +22,7 @@ final class StatusMenuController {
     var onClearLogFile: (() -> Void)?
     var onGrantAccessibility: (() -> Void)?
     var onShowPermissions: (() -> Void)?
+    var onHideAutoQuit: (() -> Void)?
     var onQuitAutoQuit: (() -> Void)?
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -87,6 +82,10 @@ final class StatusMenuController {
 
         menu.addItem(.separator())
 
+        let hideItem = NSMenuItem()
+        configureMenuItem(hideItem, title: "Hide AutoQuit", tag: .hide)
+        menu.addItem(hideItem)
+
         let quitItem = NSMenuItem()
         configureMenuItem(quitItem, title: "Quit AutoQuit", tag: .quit, keyEquivalent: "q")
         menu.addItem(quitItem)
@@ -97,7 +96,7 @@ final class StatusMenuController {
         gracePeriod: TimeInterval,
         isLoggingEnabled: Bool,
         isAccessibilityTrusted: Bool,
-        launchAtLoginState: LaunchAtLoginState
+        launchAtLoginState: LoginItemManager.State
     ) {
         enabledItem.title = isEnabled ? "AutoQuit Enabled" : "Enable AutoQuit"
         enabledItem.state = isEnabled ? .on : .off
@@ -110,6 +109,10 @@ final class StatusMenuController {
         applyGraceSelection(gracePeriod: gracePeriod)
         applyLaunchAtLoginState(launchAtLoginState)
         applyMenuIcon(isEnabled: isEnabled)
+    }
+
+    func setStatusItemHidden(_ hidden: Bool) {
+        statusItem.isVisible = !hidden
     }
 
     private func configureGraceMenu() {
@@ -129,7 +132,7 @@ final class StatusMenuController {
         }
     }
 
-    private func applyLaunchAtLoginState(_ state: LaunchAtLoginState) {
+    private func applyLaunchAtLoginState(_ state: LoginItemManager.State) {
         let presentation: (title: String, state: NSControl.StateValue, enabled: Bool)
         switch state {
         case .on:
@@ -171,6 +174,8 @@ final class StatusMenuController {
             onOpenLogFile?()
         case .clearLogFile:
             onClearLogFile?()
+        case .hide:
+            onHideAutoQuit?()
         case .quit:
             onQuitAutoQuit?()
         }

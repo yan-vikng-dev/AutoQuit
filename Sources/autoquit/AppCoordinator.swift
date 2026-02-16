@@ -2,8 +2,15 @@ import AppKit
 
 @MainActor
 final class AppCoordinator {
+    enum LaunchSource: String {
+        case loginItem
+        case nonLogin
+        case unknown
+    }
+
     private enum DefaultsKey {
         static let gracePeriodSeconds = "gracePeriodSeconds"
+        static let statusItemHidden = "statusItemHidden"
     }
 
     private let engine = AutoQuitEngine()
@@ -12,8 +19,9 @@ final class AppCoordinator {
     private let loginItemManager = LoginItemManager()
     private let defaults = UserDefaults.standard
 
-    func start() {
+    func start(launchSource: LaunchSource) {
         applyPersistedSettings()
+        applyStatusItemVisibilityOnLaunch(launchSource: launchSource)
         configureEngine()
         bootstrapAccessibilityPermission()
         bindStatusActions()
@@ -49,6 +57,7 @@ final class AppCoordinator {
         statusController.onClearLogFile = { [weak self] in self?.logger.clearLogFile() }
         statusController.onGrantAccessibility = { AccessibilityInspector.promptForAccessibilityTrust() }
         statusController.onShowPermissions = { _ = AccessibilityInspector.openAccessibilitySettings() }
+        statusController.onHideAutoQuit = { [weak self] in self?.handleHideAutoQuit() }
         statusController.onQuitAutoQuit = { NSApp.terminate(nil) }
     }
 
@@ -97,6 +106,45 @@ final class AppCoordinator {
         engine.setGracePeriod(seconds: persistedGracePeriod)
     }
 
+    private func applyStatusItemVisibilityOnLaunch(launchSource: LaunchSource) {
+        let persistedHidden = defaults.bool(forKey: DefaultsKey.statusItemHidden)
+        logger.log(
+            component: "Startup",
+            message: "Launch visibility decision launchSource=\(launchSource.rawValue) persistedHidden=\(persistedHidden)"
+        )
+
+        if launchSource == .nonLogin {
+            defaults.set(false, forKey: DefaultsKey.statusItemHidden)
+            statusController.setStatusItemHidden(false)
+            logger.log(component: "Startup", message: "Cleared persisted hidden flag for non-login launch")
+            return
+        }
+
+        statusController.setStatusItemHidden(persistedHidden)
+        if launchSource == .loginItem {
+            logger.log(component: "Startup", message: "Applied status item hidden=\(persistedHidden) for login launch")
+            return
+        }
+        logger.log(component: "Startup", message: "Launch source unknown; preserved persisted hidden=\(persistedHidden)")
+    }
+
+    private func handleHideAutoQuit() {
+        defaults.set(true, forKey: DefaultsKey.statusItemHidden)
+        statusController.setStatusItemHidden(true)
+        logger.log(component: "Startup", message: "Hide action selected; persisted hidden flag set to true")
+    }
+
+    func restoreStatusItemIfHidden() {
+        guard defaults.bool(forKey: DefaultsKey.statusItemHidden) else {
+            logger.log(component: "Startup", message: "Reopen requested; no hidden status item to restore")
+            return
+        }
+        defaults.set(false, forKey: DefaultsKey.statusItemHidden)
+        statusController.setStatusItemHidden(false)
+        logger.log(component: "Startup", message: "Reopen requested; restored hidden status item and cleared flag")
+        renderMenu()
+    }
+
     private func bootstrapAccessibilityPermission() {
         logger.log(component: "Startup", message: AccessibilityInspector.runtimeIdentitySummary())
         let inspector = AccessibilityInspector()
@@ -114,21 +162,8 @@ final class AppCoordinator {
             gracePeriod: engine.gracePeriodSeconds,
             isLoggingEnabled: logger.isEnabled,
             isAccessibilityTrusted: engine.isAccessibilityTrusted,
-            launchAtLoginState: launchAtLoginMenuState
+            launchAtLoginState: loginItemManager.state
         )
-    }
-
-    private var launchAtLoginMenuState: StatusMenuController.LaunchAtLoginState {
-        switch loginItemManager.state {
-        case .on:
-            return .on
-        case .off:
-            return .off
-        case .requiresApproval:
-            return .requiresApproval
-        case .unavailable:
-            return .unavailable
-        }
     }
 
     private func showAccessibilityRequiredAlert() {
