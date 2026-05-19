@@ -119,7 +119,6 @@
 				};
 			};
 			buildConfigurationList = 9DDDA4B28E3E53D537D5A4D5 /* Build configuration list for PBXProject "AutoQuit" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -129,6 +128,7 @@
 			mainGroup = F4B2BC48301A244A3357C1A7;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = DCE8A7BD080C186E4D7AF9DA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -177,8 +177,9 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 35BT7G59BF;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "AutoQuit-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -186,8 +187,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.1.0;
-				NSHumanReadableCopyright = Placeholder;
+				MARKETING_VERSION = 1.0.0;
+				NSHumanReadableCopyright = "Copyright © 2026 Yan. All rights reserved.";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yan.autoquit;
 				PRODUCT_NAME = AutoQuit;
 				SDKROOT = macosx;
@@ -201,8 +202,9 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 35BT7G59BF;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "AutoQuit-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -210,8 +212,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.1.0;
-				NSHumanReadableCopyright = Placeholder;
+				MARKETING_VERSION = 1.0.0;
+				NSHumanReadableCopyright = "Copyright © 2026 Yan. All rights reserved.";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yan.autoquit;
 				PRODUCT_NAME = AutoQuit;
 				SDKROOT = macosx;

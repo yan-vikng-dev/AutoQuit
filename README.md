@@ -19,10 +19,9 @@ This mirrors Windows behaviour where apps cannot remain open without a window.
 ## Installation
 
 1. Download the latest build: https://github.com/yan-vikng-dev/AutoQuit/releases/latest
-2. Open the `.zip` and move `AutoQuit.app` to `/Applications`.
-3. Open `AutoQuit.app`.
-
-> Temporary note: until AutoQuit is signed with an Apple Developer account, macOS may show a “malicious software” warning. If that happens, open it from `System Settings -> Privacy & Security` (or right-click `AutoQuit.app` -> `Open`) to allow it.
+2. Open the `.dmg`.
+3. Drag `AutoQuit.app` to `Applications`.
+4. Eject the disk image and open `AutoQuit.app` from `/Applications`.
 
 ## Build and Run
 
@@ -37,3 +36,7 @@ Or use the local install workflow:
 just rebuild-install
 open /Applications/AutoQuit.app
 ```
+
+## Releasing
+
+Maintainer release steps are documented in `RELEASING.md`.
