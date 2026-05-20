@@ -3,27 +3,6 @@
 AutoQuit is distributed outside the Mac App Store as a Developer ID signed and
 notarized macOS app, published as GitHub Releases and via a Homebrew tap.
 
-## One-time Apple setup
-
-1. Create or download a **Developer ID Application** certificate.
-   - Apple Developer: https://developer.apple.com/account/resources/certificates/list
-   - If creating it on the website, choose `Developer ID Application` and upload
-     a certificate signing request from Keychain Access.
-   - Install the downloaded certificate in the login keychain.
-
-2. Create an app-specific password for notarization.
-   - Apple Account: https://account.apple.com/account/manage
-   - Sign-In and Security -> App-Specific Passwords.
-
-3. Store notarization credentials in the local keychain.
-
-   ```bash
-   xcrun notarytool store-credentials autoquit-notary \
-     --apple-id "YOUR_APPLE_ID_EMAIL" \
-     --team-id "35BT7G59BF" \
-     --password "YOUR_APP_SPECIFIC_PASSWORD"
-   ```
-
 ## Commit message convention
 
 Release notes are auto-generated from `git log` by `git-cliff`, so commit
