@@ -1,0 +1,47 @@
+# git-cliff configuration for AutoQuit
+# Generates release notes from conventional-commit messages between two tags.
+# See https://git-cliff.org/docs/configuration for full reference.
+
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+- {{ commit.message | split(pat="\n") | first | upper_first }}\
+  {% if commit.breaking %} (**breaking**){% endif %}\
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+# Parse commits as Conventional Commits (feat: ..., fix: ...).
+conventional_commits = true
+# If a commit doesn't match the conventional format, still include it
+# (bucketed under "Other"). Toggle to true once your habit is solid.
+filter_unconventional = false
+split_commits = false
+# Drop the auto-generated release commit so it doesn't appear in its own notes.
+commit_preprocessors = []
+commit_parsers = [
+  { message = "^[Rr]elease v?\\d+\\.\\d+\\.\\d+", skip = true },
+  { message = "^feat",     group = "Features" },
+  { message = "^fix",      group = "Bug fixes" },
+  { message = "^perf",     group = "Performance" },
+  { message = "^refactor", group = "Refactor" },
+  { message = "^docs",     group = "Documentation" },
+  { message = "^test",     group = "Tests" },
+  { message = "^build",    group = "Build" },
+  { message = "^ci",       group = "CI" },
+  { message = "^chore",    group = "Chores", skip = true },
+  { message = ".*",        group = "Other" },
+]
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+"
+skip_tags = ""
+ignore_tags = ""
+topo_order = false
+sort_commits = "newest"

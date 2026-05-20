@@ -47,6 +47,7 @@ fastlane/test_output
 .derived-release/
 .derived-signing/
 .netrc
+dist/
 
 # Editor settings (optional)
 .vscode/
