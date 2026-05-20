@@ -18,6 +18,15 @@ This mirrors Windows behaviour where apps cannot remain open without a window.
 
 ## Installation
 
+With Homebrew:
+
+```bash
+brew tap yan-vikng-dev/tap
+brew install --cask autoquit
+```
+
+Or manually:
+
 1. Download the latest build: https://github.com/yan-vikng-dev/AutoQuit/releases/latest
 2. Open the `.dmg`.
 3. Drag `AutoQuit.app` to `Applications`.
